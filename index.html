@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Aura Edits VFX — Video Editing &amp; Visual Effects Portfolio</title>
+  <meta name="description" content="Aura Edits VFX — High-retention video editing, cinematic color grading, and visual effects portfolio." />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' stop-color='%239333EA'/%3E%3Cstop offset='100%25' stop-color='%2322D3EE'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='8' fill='url(%23g)'/%3E%3Cpolygon points='12,9 24,16 12,23' fill='%2307070A'/%3E%3C/svg%3E" />
+
+  <!-- Google Fonts (Clean Modern Typography: Inter & Plus Jakarta Sans + JetBrains Mono) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Outfit:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="styles.css" />
+
+  <!-- GSAP & ScrollTrigger -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <!-- Fixed Full-Screen Scroll Photo-Frame Background Canvas -->
+  <canvas id="bg-scroll-canvas" aria-hidden="true"></canvas>
+  <div class="bg-frame-overlay" aria-hidden="true"></div>
+
+  <!-- Film Grain & Ambient Background Glows -->
+  <div class="film-grain" aria-hidden="true"></div>
+  <div class="ambient-bg" aria-hidden="true">
+    <div class="ambient-orb orb-1"></div>
+    <div class="ambient-orb orb-2"></div>
+    <div class="ambient-orb orb-3"></div>
+  </div>
+
+  <!-- Navigation -->
+  <header class="site-header" id="top">
+    <div class="container nav-inner">
+      <a href="#top" class="brand-logo" aria-label="Home">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span class="brand-text" id="nav-brand-name">Aura Edits VFX</span>
+      </a>
+
+      <nav class="nav-links" id="nav-links" aria-label="Primary Navigation">
+        <a href="#featured-edits">Featured Edits</a>
+        <a href="#experience">Experience</a>
+        <a href="#software">Software</a>
+        <a href="#contact">Contact</a>
+      </nav>
+
+      <div class="nav-actions">
+        <a href="#contact" class="btn btn-primary btn-sm">
+          <span>Book an Edit</span>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+        </a>
+        <button class="mobile-menu-btn" id="mobile-menu-btn" aria-label="Toggle Menu" aria-expanded="false">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- Hero Section -->
+    <section class="hero-section" id="hero">
+      <div class="container hero-grid">
+        <div class="hero-content">
+          <div class="hero-badge mono-tag hero-reveal">
+            <span class="status-dot"></span>
+            <span id="hero-badge-text">AVAILABLE FOR COMMERCIAL &amp; CREATOR PROJECTS</span>
+          </div>
+
+          <h1 class="hero-headline hero-reveal" id="hero-headline">
+            Crafting <span class="gradient-text">Cinematic</span> Cuts &amp; Seamless VFX
+          </h1>
+
+          <p class="hero-tagline hero-reveal" id="hero-tagline">
+            High-retention storytelling, frame-accurate pacing, and Hollywood-grade color &amp; compositing built to command attention.
+          </p>
+
+          <p class="hero-bio hero-reveal" id="hero-bio">
+            Partnering with creators, brands, and agencies to transform raw footage into visually unforgettable narratives.
+          </p>
+
+          <div class="hero-ctas hero-reveal">
+            <a href="#contact" class="btn btn-primary btn-glow">
+              <span>Book an Edit</span>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+            </a>
+            <a href="#featured-edits" class="btn btn-glass">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+              <span>Explore Edits</span>
+            </a>
+          </div>
+
+          <div class="hero-meta mono-tag hero-reveal">
+            <span>4K / 60FPS PIPELINE</span>
+            <span class="meta-sep">//</span>
+            <span id="hero-exp-inline">2+ YRS PRO EXPERIENCE</span>
+            <span class="meta-sep">//</span>
+            <span>WORLDWIDE REMOTE</span>
+          </div>
+        </div>
+
+        <!-- Showreel Preview Box -->
+        <div class="hero-showreel-wrap hero-reveal">
+          <div class="animated-border-card showreel-card" id="showreel-trigger" role="button" tabindex="0" aria-label="Play Showreel">
+            <div class="showreel-inner">
+              <div class="showreel-media">
+                <img id="showreel-thumb" src="" alt="Aura Edits VFX Showreel Preview" />
+                <div class="showreel-overlay"></div>
+                <div class="showreel-hud-top mono-tag">
+                  <span class="rec-indicator"><i></i> REEL 2026</span>
+                  <span id="showreel-duration">01:24 // 4K HDR</span>
+                </div>
+                <div class="showreel-play-btn">
+                  <span class="play-ring"></span>
+                  <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.14v14l11-7-11-7z"/></svg>
+                </div>
+                <div class="showreel-hud-bottom">
+                  <div>
+                    <span class="mono-tag hud-label">SIGNATURE SHOWREEL</span>
+                    <h3 id="showreel-title">Aura Edits — VFX &amp; Color Showcase</h3>
+                  </div>
+                  <span class="mono-tag hud-cta">WATCH REEL ↗</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Experience Highlight Section -->
+    <section class="experience-section" id="experience">
+      <div class="container">
+        <div class="experience-banner glass-card scroll-reveal-block">
+          <div class="exp-primary">
+            <span class="mono-tag section-kicker">PROVEN TRACK RECORD</span>
+            <div class="exp-headline-row">
+              <span class="exp-big-number" id="exp-years-display" data-count-target="2">2+</span>
+              <h2 class="exp-title" id="exp-label-display">Years of Professional Video Editing Experience</h2>
+            </div>
+            <p class="exp-desc" id="exp-subtext-display">
+              Delivering high-retention edits, kinetic motion design, and cinematic grading across commercial promos, viral reels, podcasts, and VFX-heavy productions.
+            </p>
+          </div>
+
+          <div class="exp-stats-grid" id="exp-stats-grid">
+            <!-- Dynamically rendered stat badges -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Featured Edits (Scroll-Triggered Video Showcase) -->
+    <section class="featured-section" id="featured-edits">
+      <div class="container">
+        <div class="section-header scroll-reveal-block">
+          <div>
+            <span class="mono-tag section-kicker">CURATED TIMELINE</span>
+            <h2 class="section-title">Featured <span class="gradient-text">Edits</span></h2>
+          </div>
+
+          <div class="category-filters" id="category-filters" role="tablist" aria-label="Filter videos by category">
+            <!-- Filter buttons rendered dynamically -->
+          </div>
+        </div>
+
+        <div class="videos-grid" id="videos-grid">
+          <!-- Video cards rendered dynamically with scroll-triggered GSAP scale+unblur+slide -->
+        </div>
+
+        <div class="empty-state glass-card hidden" id="videos-empty">
+          <p class="mono-tag">No edits found in this category yet.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Software Mastery Section -->
+    <section class="software-section" id="software">
+      <div class="container">
+        <div class="section-header scroll-reveal-block">
+          <div>
+            <span class="mono-tag section-kicker">INDUSTRY-STANDARD ARSENAL</span>
+            <h2 class="section-title">Software <span class="gradient-text">Mastery</span></h2>
+          </div>
+          <p class="section-subtitle">
+            Precision color pipelines, procedural VFX compositing, and rhythm-driven editorial workflows.
+          </p>
+        </div>
+
+        <div class="software-grid" id="software-grid">
+          <!-- Software mastery cards rendered dynamically -->
+        </div>
+      </div>
+    </section>
+
+    <!-- Contact & Booking Section -->
+    <section class="contact-section" id="contact">
+      <div class="container">
+        <div class="contact-wrapper glass-card scroll-reveal-block">
+          <div class="contact-info">
+            <span class="mono-tag section-kicker">START A PROJECT</span>
+            <h2 class="section-title">Let’s Cut Your Next <span class="gradient-text">Masterpiece</span></h2>
+            <p class="contact-lead">
+              Ready to elevate your visuals? Reach out directly on WhatsApp, jump on a quick call, or send your project brief below.
+            </p>
+
+            <div class="contact-number-card">
+              <span class="mono-tag">DIRECT STUDIO LINE</span>
+              <div class="phone-display" id="contact-phone-display">9213482237</div>
+            </div>
+
+            <div class="contact-direct-actions">
+              <a id="whatsapp-direct-btn" href="https://wa.me/919213482237" target="_blank" rel="noopener noreferrer" class="btn btn-whatsapp">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0 0 12.04 2m.01 1.67c2.2 0 4.26.86 5.82 2.42a8.225 8.225 0 0 1 2.41 5.83c0 4.54-3.7 8.23-8.24 8.23-1.48 0-2.93-.39-4.19-1.15l-.3-.18-3.12.82.83-3.04-.19-.31a8.18 8.18 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.24-8.24M8.53 7.33c-.16 0-.43.06-.66.31-.22.25-.86.84-.86 2.05 0 1.21.88 2.38 1 2.54.12.16 1.73 2.64 4.19 3.7.59.25 1.04.4 1.4.52.59.19 1.12.16 1.54.1.47-.07 1.45-.59 1.65-1.16.2-.57.2-1.06.14-1.16-.06-.1-.23-.16-.48-.28s-1.45-.72-1.67-.8c-.23-.08-.39-.12-.55.12-.16.25-.64.8-.78.97-.14.16-.29.18-.54.06-.25-.12-1.05-.39-2-1.23-.74-.66-1.24-1.47-1.38-1.72-.14-.25-.02-.38.11-.5.11-.11.25-.29.37-.43.12-.14.16-.25.25-.41.08-.16.04-.31-.02-.43-.06-.12-.55-1.34-.76-1.83-.2-.48-.4-.42-.55-.43h-.47Z"/></svg>
+                <span>Chat on WhatsApp</span>
+              </a>
+              <a id="call-direct-btn" href="tel:+919213482237" class="btn btn-glass">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                <span>Call Now</span>
+              </a>
+            </div>
+
+            <div class="social-links-row" id="contact-socials">
+              <!-- Rendered dynamically -->
+            </div>
+          </div>
+
+          <!-- Quick Project Inquiry Form -> Sends directly to WhatsApp -->
+          <form class="inquiry-form" id="inquiry-form">
+            <div class="form-header">
+              <span class="mono-tag">QUICK PROJECT BRIEF</span>
+              <span class="mono-tag form-pill">INSTANT WHATSAPP DISPATCH</span>
+            </div>
+
+            <div class="form-row">
+              <div class="field">
+                <label for="inq-name">Your Name</label>
+                <input type="text" id="inq-name" placeholder="e.g. Rohan Sharma" required />
+              </div>
+              <div class="field">
+                <label for="inq-category">Edit Category</label>
+                <select id="inq-category">
+                  <option value="Reels">Reels / Short-Form</option>
+                  <option value="Promo">Commercial Promo</option>
+                  <option value="VFX">VFX &amp; Compositing</option>
+                  <option value="Wedding">Wedding Film</option>
+                  <option value="Podcasts">Podcast Production</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="inq-timeline">Target Turnaround / Budget (Optional)</label>
+              <input type="text" id="inq-timeline" placeholder="e.g. 48 hours / 60s launch reel" />
+            </div>
+
+            <div class="field">
+              <label for="inq-message">Project Details</label>
+              <textarea id="inq-message" rows="4" placeholder="Tell me about your footage, style references, and goals..." required></textarea>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-full btn-glow">
+              <span>Send Brief via WhatsApp</span>
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            </button>
+          </form>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer with Discreet Admin Lock Icon -->
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <div class="footer-left">
+        <span class="brand-text" id="footer-brand-name">Aura Edits VFX</span>
+        <span class="mono-tag footer-copy">&copy; <span id="footer-year"></span> All Rights Reserved.</span>
+      </div>
+
+      <div class="footer-right">
+        <div class="footer-socials" id="footer-socials"></div>
+        <button id="admin-lock-btn" class="admin-lock-btn" title="Admin Panel (Ctrl + Shift + A)" aria-label="Open Admin Login">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        </button>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Full-Screen Lightbox Video Player -->
+  <div class="modal-backdrop hidden" id="lightbox-modal" role="dialog" aria-modal="true" aria-labelledby="lightbox-title">
+    <div class="lightbox-container">
+      <button class="lightbox-close" id="lightbox-close" aria-label="Close video player">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+      </button>
+      <div class="lightbox-player-frame" id="lightbox-player-frame">
+        <!-- Dynamic iframe or video -->
+      </div>
+      <div class="lightbox-meta">
+        <div>
+          <span class="mono-tag lightbox-cat" id="lightbox-category">VFX</span>
+          <h3 id="lightbox-title">Video Title</h3>
+          <p id="lightbox-desc">Video description</p>
+        </div>
+        <a href="#contact" class="btn btn-primary btn-sm" id="lightbox-book-btn">Book Similar Edit</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Admin Login Modal -->
+  <div class="modal-backdrop hidden" id="admin-login-modal" role="dialog" aria-modal="true" aria-labelledby="admin-login-heading">
+    <div class="login-card glass-card">
+      <button class="modal-close-sm" id="login-close-btn" aria-label="Close login modal">&times;</button>
+      <div class="login-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      </div>
+      <span class="mono-tag">RESTRICTED ACCESS</span>
+      <h3 id="admin-login-heading">Studio Admin Unlock</h3>
+      <p class="login-sub">Enter studio password to customize content, videos, theme, and contact settings.</p>
+
+      <form id="admin-login-form">
+        <div class="field">
+          <label for="admin-password-input">Password</label>
+          <input type="password" id="admin-password-input" placeholder="Enter password..." autocomplete="current-password" required />
+        </div>
+        <p class="login-error hidden" id="login-error">Incorrect password. Please try again.</p>
+        <button type="submit" class="btn btn-primary btn-full">Unlock Dashboard</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Full-Control Admin Dashboard Modal -->
+  <div class="modal-backdrop hidden" id="admin-dashboard-modal" role="dialog" aria-modal="true" aria-labelledby="admin-dash-title">
+    <div class="admin-panel glass-card">
+      <div class="admin-header">
+        <div>
+          <span class="mono-tag">LIVE STUDIO CMS // AUTO-SAVING</span>
+          <h2 id="admin-dash-title">Aura Edits Admin Control</h2>
+        </div>
+        <div class="admin-header-actions">
+          <button type="button" class="btn btn-glass btn-xs" id="export-config-btn">Export Config (JSON)</button>
+          <label class="btn btn-glass btn-xs import-label" for="import-config-input">
+            Import Config
+            <input type="file" id="import-config-input" accept="application/json,.json" hidden />
+          </label>
+          <button type="button" class="btn btn-danger-ghost btn-xs" id="reset-config-btn">Reset Defaults</button>
+          <button type="button" class="modal-close-sm" id="admin-close-btn" aria-label="Close Admin Panel">&times;</button>
+        </div>
+      </div>
+
+      <div class="admin-tabs" role="tablist">
+        <button class="admin-tab active" data-tab="brand" role="tab">Brand &amp; Text</button>
+        <button class="admin-tab" data-tab="theme" role="tab">Theme &amp; Fonts</button>
+        <button class="admin-tab" data-tab="videos" role="tab">Video Manager</button>
+        <button class="admin-tab" data-tab="software" role="tab">Software Stack</button>
+        <button class="admin-tab" data-tab="contact" role="tab">Contact &amp; Socials</button>
+      </div>
+
+      <div class="admin-body">
+        <!-- TAB 1: Brand & Text Editor -->
+        <div class="admin-tab-pane active" id="tab-brand">
+          <div class="admin-grid-2">
+            <div class="field">
+              <label for="adm-brand-name">Brand Name</label>
+              <input type="text" id="adm-brand-name" />
+            </div>
+            <div class="field">
+              <label for="adm-hero-badge">Hero Status Badge</label>
+              <input type="text" id="adm-hero-badge" />
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="adm-hero-headline">Hero Headline (use *word* for gradient highlight)</label>
+            <input type="text" id="adm-hero-headline" />
+          </div>
+
+          <div class="field">
+            <label for="adm-hero-tagline">Hero Tagline</label>
+            <textarea id="adm-hero-tagline" rows="2"></textarea>
+          </div>
+
+          <div class="field">
+            <label for="adm-hero-bio">Profile Bio</label>
+            <textarea id="adm-hero-bio" rows="2"></textarea>
+          </div>
+
+          <div class="admin-grid-2">
+            <div class="field">
+              <label for="adm-exp-years">Years of Experience (e.g. 2+)</label>
+              <input type="text" id="adm-exp-years" />
+            </div>
+            <div class="field">
+              <label for="adm-exp-label">Experience Headline</label>
+              <input type="text" id="adm-exp-label" />
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="adm-exp-subtext">Experience Description</label>
+            <textarea id="adm-exp-subtext" rows="2"></textarea>
+          </div>
+
+          <div class="admin-divider"></div>
+          <h4 class="admin-subhead">Showreel Box Settings</h4>
+          <div class="admin-grid-2">
+            <div class="field">
+              <label for="adm-reel-title">Showreel Title</label>
+              <input type="text" id="adm-reel-title" />
+            </div>
+            <div class="field">
+              <label for="adm-reel-duration">Showreel Spec Tag</label>
+              <input type="text" id="adm-reel-duration" />
+            </div>
+          </div>
+          <div class="admin-grid-2">
+            <div class="field">
+              <label for="adm-reel-url">Showreel Video URL (YouTube / Drive / MP4)</label>
+              <input type="url" id="adm-reel-url" />
+            </div>
+            <div class="field">
+              <label for="adm-reel-thumb">Showreel Thumbnail URL (optional)</label>
+              <input type="url" id="adm-reel-thumb" />
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 2: Theme & Font Customizer -->
+        <div class="admin-tab-pane" id="tab-theme">
+          <div class="admin-grid-3">
+            <div class="field">
+              <label for="adm-accent-color">Primary Accent Color</label>
+              <div class="color-input-wrap">
+                <input type="color" id="adm-accent-color" />
+                <input type="text" id="adm-accent-hex" class="mono-input" />
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="adm-secondary-color">Secondary / Gold Accent</label>
+              <div class="color-input-wrap">
+                <input type="color" id="adm-secondary-color" />
+                <input type="text" id="adm-secondary-hex" class="mono-input" />
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="adm-glow-color">Background Glow Tint</label>
+              <div class="color-input-wrap">
+                <input type="color" id="adm-glow-color" />
+                <input type="text" id="adm-glow-hex" class="mono-input" />
+              </div>
+            </div>
+          </div>
+
+          <div class="field">
+            <label>Quick Luxury Presets</label>
+            <div class="preset-row">
+              <button type="button" class="preset-chip" data-accent="#9333EA" data-secondary="#F59E0B" data-glow="#7E22CE">Electric Purple + Gold</button>
+              <button type="button" class="preset-chip" data-accent="#06B6D4" data-secondary="#A855F7" data-glow="#0891B2">Cyber Cyan + Purple</button>
+              <button type="button" class="preset-chip" data-accent="#F59E0B" data-secondary="#EC4899" data-glow="#B45309">Luxury Gold + Ember</button>
+              <button type="button" class="preset-chip" data-accent="#EC4899" data-secondary="#22D3EE" data-glow="#BE185D">Neon Magenta + Cyan</button>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="adm-heading-font">Heading Font Style</label>
+            <select id="adm-heading-font">
+              <option value="Plus Jakarta Sans">Plus Jakarta Sans — Clean Modern</option>
+              <option value="Inter">Inter — Crisp Minimalist</option>
+              <option value="Outfit">Outfit — Clean Geometric</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- TAB 3: Video Manager -->
+        <div class="admin-tab-pane" id="tab-videos">
+          <form id="adm-video-form" class="admin-subcard">
+            <h4 class="admin-subhead" id="adm-video-form-title">Add New Video</h4>
+            <input type="hidden" id="adm-video-edit-id" />
+            <div class="admin-grid-2">
+              <div class="field">
+                <label for="adm-vid-title">Title</label>
+                <input type="text" id="adm-vid-title" placeholder="e.g. Cyberpunk Sneaker Commercial" required />
+              </div>
+              <div class="field">
+                <label for="adm-vid-cat">Category</label>
+                <select id="adm-vid-cat">
+                  <option value="Reels">Reels</option>
+                  <option value="Promo">Promo</option>
+                  <option value="VFX">VFX</option>
+                  <option value="Wedding">Wedding</option>
+                  <option value="Podcasts">Podcasts</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="admin-grid-2">
+              <div class="field">
+                <label for="adm-vid-url">Video URL (YouTube, Google Drive, or Direct MP4)</label>
+                <input type="url" id="adm-vid-url" placeholder="https://youtube.com/... or https://drive.google.com/file/d/.../view" required />
+              </div>
+              <div class="field">
+                <label for="adm-vid-thumb">Thumbnail URL (optional — auto-fetched for YouTube)</label>
+                <input type="url" id="adm-vid-thumb" placeholder="https://..." />
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="adm-vid-desc">Description</label>
+              <textarea id="adm-vid-desc" rows="2" placeholder="Describe the edit, VFX techniques, color pipeline..."></textarea>
+            </div>
+
+            <div class="form-actions-inline">
+              <button type="submit" class="btn btn-primary btn-sm" id="adm-vid-submit-btn">Add Video</button>
+              <button type="button" class="btn btn-glass btn-sm hidden" id="adm-vid-cancel-btn">Cancel Edit</button>
+            </div>
+          </form>
+
+          <div class="admin-list" id="adm-video-list">
+            <!-- Managed video items -->
+          </div>
+        </div>
+
+        <!-- TAB 4: Software Stack Manager -->
+        <div class="admin-tab-pane" id="tab-software">
+          <form id="adm-software-form" class="admin-subcard">
+            <h4 class="admin-subhead" id="adm-sw-form-title">Add Software Skill</h4>
+            <input type="hidden" id="adm-sw-edit-id" />
+            <div class="admin-grid-3">
+              <div class="field">
+                <label for="adm-sw-name">Software Name</label>
+                <input type="text" id="adm-sw-name" placeholder="e.g. Blender 3D" required />
+              </div>
+              <div class="field">
+                <label for="adm-sw-role">Specialty / Subtitle</label>
+                <input type="text" id="adm-sw-role" placeholder="e.g. 3D CGI &amp; Tracking" required />
+              </div>
+              <div class="field">
+                <label for="adm-sw-icon">Icon Preset</label>
+                <select id="adm-sw-icon">
+                  <option value="davinci">DaVinci Resolve</option>
+                  <option value="aftereffects">Adobe After Effects</option>
+                  <option value="premiere">Adobe Premiere Pro</option>
+                  <option value="blender">3D / CGI Cube</option>
+                  <option value="audio">Sound &amp; Mastering</option>
+                  <option value="sparkles">AI / Custom VFX</option>
+                </select>
+              </div>
+            </div>
+            <div class="admin-grid-2">
+              <div class="field">
+                <label for="adm-sw-tag">Technical Tag</label>
+                <input type="text" id="adm-sw-tag" placeholder="e.g. ACES COLOR // NODE COMPOSITING" />
+              </div>
+              <div class="field">
+                <label for="adm-sw-desc">Short Description</label>
+                <input type="text" id="adm-sw-desc" placeholder="Concise workflow summary..." />
+              </div>
+            </div>
+            <div class="form-actions-inline">
+              <button type="submit" class="btn btn-primary btn-sm" id="adm-sw-submit-btn">Add Software</button>
+              <button type="button" class="btn btn-glass btn-sm hidden" id="adm-sw-cancel-btn">Cancel Edit</button>
+            </div>
+          </form>
+
+          <div class="admin-list" id="adm-software-list">
+            <!-- Managed software items -->
+          </div>
+        </div>
+
+        <!-- TAB 5: Contact & Socials -->
+        <div class="admin-tab-pane" id="tab-contact">
+          <div class="admin-grid-2">
+            <div class="field">
+              <label for="adm-phone">Phone / WhatsApp Number</label>
+              <input type="text" id="adm-phone" placeholder="9213482237" />
+            </div>
+            <div class="field">
+              <label for="adm-country-code">Country Dial Code (digits only)</label>
+              <input type="text" id="adm-country-code" placeholder="91" />
+            </div>
+          </div>
+
+          <div class="admin-divider"></div>
+          <h4 class="admin-subhead">Social Media Links</h4>
+          <form id="adm-social-form" class="admin-subcard">
+            <div class="admin-grid-2">
+              <div class="field">
+                <label for="adm-soc-label">Platform Name</label>
+                <input type="text" id="adm-soc-label" placeholder="e.g. Instagram" required />
+              </div>
+              <div class="field">
+                <label for="adm-soc-url">Profile URL</label>
+                <input type="url" id="adm-soc-url" placeholder="https://instagram.com/..." required />
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary btn-sm">Add Social Link</button>
+          </form>
+
+          <div class="admin-list" id="adm-social-list">
+            <!-- Social items -->
+          </div>
+        </div>
+      </div>
+
+      <div class="admin-footer-bar">
+        <span class="mono-tag save-status" id="admin-save-status">● All changes saved to localStorage</span>
+        <button type="button" class="btn btn-primary btn-sm" id="admin-done-btn">Done &amp; Preview</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Subtle Toast Notification -->
+  <div class="toast hidden" id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>
