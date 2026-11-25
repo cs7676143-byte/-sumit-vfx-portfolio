@@ -50,7 +50,7 @@ body {
   position: relative;
 }
 
-/* Fixed Full-Screen Scroll Photo-Frame Background (GPU Accelerated) */
+/* Fixed Full-Screen Scroll Photo-Frame Background */
 #bg-scroll-canvas {
   position: fixed;
   top: 0;
@@ -64,7 +64,6 @@ body {
   will-change: transform;
 }
 
-/* Halka cinematic overlay taaki background frames saaf aur bright dikhein */
 .bg-frame-overlay {
   position: fixed;
   inset: 0;
@@ -104,7 +103,6 @@ textarea {
   padding: 0 28px;
 }
 
-/* Disabled heavy continuous grain repaint for smooth 60fps scroll */
 .film-grain {
   display: none;
 }
@@ -205,7 +203,7 @@ h1, h2, h3, h4, .brand-text {
   50% { background-position: 100% 50%; }
 }
 
-/* Glassmorphic Card (Lightweight blur for smooth mobile scroll) */
+/* Glassmorphic Card */
 .glass-card {
   position: relative;
   background: var(--bg-surface);
@@ -580,6 +578,7 @@ h1, h2, h3, h4, .brand-text {
   position: absolute;
   inset: 0;
   background: linear-gradient(180deg, rgba(7, 7, 10, 0.5) 0%, rgba(7, 7, 10, 0.12) 45%, rgba(7, 7, 10, 0.9) 100%);
+  transition: opacity 0.25s ease;
 }
 
 .showreel-hud-top {
@@ -592,6 +591,7 @@ h1, h2, h3, h4, .brand-text {
   align-items: center;
   color: rgba(255, 255, 255, 0.9);
   z-index: 3;
+  transition: opacity 0.25s ease;
 }
 
 .rec-indicator {
@@ -659,6 +659,7 @@ h1, h2, h3, h4, .brand-text {
   align-items: flex-end;
   gap: 16px;
   z-index: 3;
+  transition: opacity 0.25s ease;
 }
 
 .hud-label {
@@ -814,11 +815,11 @@ section {
   box-shadow: 0 8px 22px color-mix(in srgb, var(--accent) 35%, transparent);
 }
 
-/* Featured Edits Grid (Optimized without per-card backdrop-filter for smooth scrolling) */
+/* Featured Edits Grid — Always 3 Columns Side-by-Side */
 .videos-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 32px;
+  gap: 28px;
 }
 
 .video-card {
@@ -890,32 +891,32 @@ section {
 
 .video-cat-badge {
   position: absolute;
-  top: 14px;
-  left: 14px;
+  top: 12px;
+  left: 12px;
   z-index: 3;
-  padding: 5px 12px;
+  padding: 4px 10px;
   border-radius: 999px;
   background: rgba(7, 7, 10, 0.78);
   border: 1px solid rgba(255, 255, 255, 0.14);
   color: var(--accent-cyan);
   font-family: var(--font-mono);
-  font-size: 0.7rem;
-  letter-spacing: 0.1em;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
 .video-source-badge {
   position: absolute;
-  top: 14px;
-  right: 14px;
+  top: 12px;
+  right: 12px;
   z-index: 3;
-  padding: 5px 10px;
+  padding: 4px 8px;
   border-radius: 6px;
   background: rgba(7, 7, 10, 0.75);
   border: 1px solid rgba(255, 255, 255, 0.1);
   color: var(--text-secondary);
   font-family: var(--font-mono);
-  font-size: 0.65rem;
+  font-size: 0.62rem;
   text-transform: uppercase;
 }
 
@@ -924,8 +925,8 @@ section {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%) scale(0.92);
-  width: 60px;
-  height: 60px;
+  width: 56px;
+  height: 56px;
   border-radius: 50%;
   background: rgba(15, 15, 24, 0.75);
   border: 1px solid rgba(255, 255, 255, 0.28);
@@ -972,22 +973,25 @@ section {
 
 .is-playing .video-play-circle,
 .is-playing .video-thumb-gradient,
-.is-playing .showreel-play-btn {
+.is-playing .showreel-play-btn,
+.is-playing .showreel-overlay,
+.is-playing .showreel-hud-top,
+.is-playing .showreel-hud-bottom {
   opacity: 0;
 }
 
 .video-playing-tag {
   position: absolute;
-  bottom: 12px;
-  right: 12px;
+  bottom: 10px;
+  right: 10px;
   z-index: 3;
-  padding: 4px 10px;
+  padding: 3px 9px;
   border-radius: 999px;
   background: rgba(7, 7, 10, 0.85);
   border: 1px solid rgba(34, 211, 238, 0.45);
   color: var(--accent-cyan);
   font-family: var(--font-mono);
-  font-size: 0.64rem;
+  font-size: 0.6rem;
   letter-spacing: 0.08em;
   opacity: 0;
   transition: opacity 0.25s ease;
@@ -998,20 +1002,20 @@ section {
 }
 
 .video-card-body {
-  padding: 24px 26px 26px;
+  padding: 20px 22px 22px;
   position: relative;
   z-index: 1;
 }
 
 .video-card-title {
-  font-size: 1.2rem;
+  font-size: 1.15rem;
   font-weight: 700;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
   line-height: 1.25;
 }
 
 .video-card-desc {
-  font-size: 0.91rem;
+  font-size: 0.89rem;
   color: var(--text-secondary);
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -1670,9 +1674,14 @@ section {
     grid-template-columns: 1fr;
   }
 
-  .videos-grid,
   .software-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  /* Featured Edits stays 3 columns side-by-side */
+  .videos-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
   }
 }
 
@@ -1682,7 +1691,7 @@ section {
   }
 
   .container {
-    padding: 0 20px;
+    padding: 0 14px;
   }
 
   .hero-section {
@@ -1716,7 +1725,57 @@ section {
     display: flex;
   }
 
-  .videos-grid,
+  /* 3-Column Video Grid on Mobile with Compact Card Styling */
+  .videos-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 9px;
+  }
+
+  .video-card {
+    border-radius: 12px;
+  }
+
+  .video-cat-badge {
+    top: 6px;
+    left: 6px;
+    padding: 2px 6px;
+    font-size: 0.52rem;
+  }
+
+  .video-source-badge,
+  .video-playing-tag {
+    display: none;
+  }
+
+  .video-play-circle {
+    width: 30px;
+    height: 30px;
+  }
+
+  .video-play-circle svg {
+    width: 13px;
+    height: 13px;
+  }
+
+  .video-card-body {
+    padding: 9px 8px 11px;
+  }
+
+  .video-card-title {
+    font-size: 0.78rem;
+    margin-bottom: 3px;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .video-card-desc {
+    font-size: 0.66rem;
+    line-height: 1.3;
+    -webkit-line-clamp: 2;
+  }
+
   .software-grid,
   .form-row,
   .admin-grid-2,
@@ -1726,7 +1785,7 @@ section {
 
   .experience-banner,
   .contact-wrapper {
-    padding: 26px;
+    padding: 24px;
   }
 
   .admin-list-item {
