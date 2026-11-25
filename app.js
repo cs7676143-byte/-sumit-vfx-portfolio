@@ -493,7 +493,7 @@
         return `
         <article class="video-card spotlight-card" data-video-id="${escapeHtml(vid.id)}" tabindex="0" role="button" aria-label="Play ${escapeHtml(vid.title)}">
           <div class="video-thumb-wrap">
-            <div class="video-thumb-fallback">${escapeHtml(vid.category)} // PLAY</div>
+            <div class="video-thumb-fallback">${escapeHtml(vid.category)}</div>
             ${
               thumbSrc
                 ? `<img src="${escapeHtml(thumbSrc)}" alt="${escapeHtml(vid.title)}" loading="lazy" onerror="this.remove()" />`
@@ -503,7 +503,7 @@
             <div class="video-thumb-gradient"></div>
             <span class="video-cat-badge">${escapeHtml(vid.category)}</span>
             <span class="video-source-badge">${escapeHtml(parsed.badge)}</span>
-            <span class="video-playing-tag">● PLAYING // CLICK FOR SOUND</span>
+            <span class="video-playing-tag">● PLAYING</span>
             <div class="video-play-circle" aria-hidden="true">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.14v14l11-7-11-7z"/></svg>
             </div>
@@ -596,7 +596,7 @@
     });
   }
 
-  // ---------- Scroll Animations (Optimized without heavy blur/scrub) ----------
+  // ---------- Scroll Animations ----------
   function animateVideoCards(isFilterSwitch = false) {
     const cards = Array.from(document.querySelectorAll("#videos-grid .video-card"));
     if (!cards.length) return;
@@ -747,8 +747,9 @@
     requestAnimationFrame(step);
   }
 
-  // ---------- Scroll Auto-Play (Debounced, One Active Video at a Time) ----------
-  let activeAutoPlayEl = null;
+  // ---------- Scroll Auto-Play (Up to 3 Videos Simultaneously) ----------
+  const MAX_CONCURRENT_VIDEOS = 3;
+  const activeAutoPlaySet = new Set();
   let scrollAutoPlayTicking = false;
   let autoPlayDelayTimer = null;
 
@@ -773,50 +774,45 @@
     el.classList.remove("is-playing");
     const slot = el.querySelector(".video-inline-player, .showreel-inline-player");
     if (slot) slot.innerHTML = "";
-    if (activeAutoPlayEl === el) activeAutoPlayEl = null;
+    activeAutoPlaySet.delete(el);
   }
 
   function stopAllInlineVideos() {
     clearTimeout(autoPlayDelayTimer);
+    Array.from(activeAutoPlaySet).forEach((el) => stopInlineVideo(el));
     document.querySelectorAll(".is-playing").forEach((el) => stopInlineVideo(el));
-    activeAutoPlayEl = null;
+    activeAutoPlaySet.clear();
   }
 
-  function startInlineVideo(el) {
-    if (!el || activeAutoPlayEl === el) return;
-    if (activeAutoPlayEl) stopInlineVideo(activeAutoPlayEl);
+  function playSingleInlineElement(el) {
+    if (!el || activeAutoPlaySet.has(el)) return;
 
-    clearTimeout(autoPlayDelayTimer);
-    autoPlayDelayTimer = setTimeout(() => {
-      if (activeAutoPlayEl === el) return;
+    let videoUrl = "";
+    let videoTitle = "";
+    let slot = null;
 
-      let videoUrl = "";
-      let videoTitle = "";
-      let slot = null;
-
-      if (el.id === "showreel-trigger") {
-        videoUrl = config.brand.reelUrl;
-        videoTitle = config.brand.reelTitle;
-        const mediaBox = el.querySelector(".showreel-media");
-        if (mediaBox && !mediaBox.querySelector(".showreel-inline-player")) {
-          const div = document.createElement("div");
-          div.className = "showreel-inline-player";
-          mediaBox.insertBefore(div, mediaBox.querySelector(".showreel-overlay"));
-        }
-        slot = el.querySelector(".showreel-inline-player");
-      } else {
-        const vid = config.videos.find((v) => v.id === el.dataset.videoId);
-        if (!vid) return;
-        videoUrl = vid.url;
-        videoTitle = vid.title;
-        slot = el.querySelector(".video-inline-player");
+    if (el.id === "showreel-trigger") {
+      videoUrl = config.brand.reelUrl;
+      videoTitle = config.brand.reelTitle;
+      const mediaBox = el.querySelector(".showreel-media");
+      if (mediaBox && !mediaBox.querySelector(".showreel-inline-player")) {
+        const div = document.createElement("div");
+        div.className = "showreel-inline-player";
+        mediaBox.insertBefore(div, mediaBox.querySelector(".showreel-overlay"));
       }
+      slot = el.querySelector(".showreel-inline-player");
+    } else {
+      const vid = config.videos.find((v) => v.id === el.dataset.videoId);
+      if (!vid) return;
+      videoUrl = vid.url;
+      videoTitle = vid.title;
+      slot = el.querySelector(".video-inline-player");
+    }
 
-      if (!slot || !videoUrl) return;
-      slot.innerHTML = buildInlinePreviewHtml(videoUrl, videoTitle);
-      el.classList.add("is-playing");
-      activeAutoPlayEl = el;
-    }, 280);
+    if (!slot || !videoUrl) return;
+    slot.innerHTML = buildInlinePreviewHtml(videoUrl, videoTitle);
+    el.classList.add("is-playing");
+    activeAutoPlaySet.add(el);
   }
 
   function updateScrollAutoPlay() {
@@ -834,30 +830,37 @@
 
     const vh = window.innerHeight;
     const viewportCenter = vh * 0.5;
-    let bestEl = null;
-    let bestDistance = Infinity;
+    const visibleItems = [];
 
     candidates.forEach((el) => {
       const rect = el.getBoundingClientRect();
       const visibleHeight = Math.min(rect.bottom, vh) - Math.max(rect.top, 0);
       const ratio = rect.height > 0 ? visibleHeight / rect.height : 0;
 
-      if (ratio >= 0.5) {
+      if (ratio >= 0.4) {
         const cardCenter = rect.top + rect.height * 0.5;
         const dist = Math.abs(cardCenter - viewportCenter);
-        if (dist < bestDistance) {
-          bestDistance = dist;
-          bestEl = el;
-        }
+        visibleItems.push({ el, dist });
       }
     });
 
-    if (bestEl) {
-      startInlineVideo(bestEl);
-    } else {
-      clearTimeout(autoPlayDelayTimer);
-      if (activeAutoPlayEl) stopInlineVideo(activeAutoPlayEl);
-    }
+    // Screen ke center ke sabse kareeb wale 3 videos chunein
+    visibleItems.sort((a, b) => a.dist - b.dist);
+    const targetSet = new Set(visibleItems.slice(0, MAX_CONCURRENT_VIDEOS).map((item) => item.el));
+
+    // Jo videos ab screen se bahar chale gaye hain unhe band karein
+    Array.from(activeAutoPlaySet).forEach((el) => {
+      if (!targetSet.has(el)) {
+        stopInlineVideo(el);
+      }
+    });
+
+    clearTimeout(autoPlayDelayTimer);
+    if (targetSet.size === 0) return;
+
+    autoPlayDelayTimer = setTimeout(() => {
+      targetSet.forEach((el) => playSingleInlineElement(el));
+    }, 250);
   }
 
   function initScrollAutoPlay() {
@@ -1414,7 +1417,7 @@
     });
   }
 
-  // ---------- Background Scroll Photo-Frame Animation (On-Demand 60fps Engine) ----------
+  // ---------- Background Scroll Photo-Frame Animation (Single Crisp Full-Screen Layer) ----------
   function initBackgroundScrollFrames() {
     const canvas = document.getElementById("bg-scroll-canvas");
     if (!canvas) return;
@@ -1464,16 +1467,16 @@
       scheduleRender();
     }
 
-    function drawFrameLayer(img, alpha, mode) {
+    function drawSingleCoverFrame(img, alpha) {
       const iw = img.naturalWidth;
       const ih = img.naturalHeight;
       if (!iw || !ih) return;
 
-      const scale = mode === "cover" ? Math.max(width / iw, height / ih) : Math.min(width / iw, height / ih);
+      const scale = Math.max(width / iw, height / ih);
       const dw = iw * scale;
       const dh = ih * scale;
       const dx = (width - dw) * 0.5;
-      const dy = mode === "cover" ? (height - dh) * 0.32 : (height - dh) * 0.5;
+      const dy = (height - dh) * 0.28;
 
       ctx.globalAlpha = alpha;
       ctx.drawImage(img, dx, dy, dw, dh);
@@ -1518,19 +1521,18 @@
       const frac = clamped - indexA;
 
       const drawA = findNearestReady(indexA);
-      const drawB = frac > 0.03 && ready[indexB] ? indexB : -1;
-      const quantAlpha = drawB !== -1 ? Math.round(frac * 50) / 50 : 0;
+      const drawB = frac > 0.04 && ready[indexB] ? indexB : -1;
+      const quantAlpha = drawB !== -1 ? Math.round(frac * 40) / 40 : 0;
 
       if (drawA !== -1 && (drawA !== lastDrawnA || drawB !== lastDrawnB || quantAlpha !== lastAlpha)) {
         ctx.globalAlpha = 1;
         ctx.fillStyle = "#07070A";
         ctx.fillRect(0, 0, width, height);
 
-        // Bright full-screen backdrop + sharp centered frame
-        drawFrameLayer(frames[drawA], 0.72, "cover");
-        drawFrameLayer(frames[drawA], 1, "contain");
+        // Sirf ek single full-screen layer — koi double image nahi
+        drawSingleCoverFrame(frames[drawA], 1);
         if (drawB !== -1 && drawB !== drawA && quantAlpha > 0) {
-          drawFrameLayer(frames[drawB], 1 * quantAlpha, "contain");
+          drawSingleCoverFrame(frames[drawB], quantAlpha);
         }
         ctx.globalAlpha = 1;
 
