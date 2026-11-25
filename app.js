@@ -1,7 +1,8 @@
 (() => {
   const STORAGE_KEY = "aura_edits_vfx_config_v1";
   const ADMIN_PASS = "sumit111";
-  const CATEGORIES = ["All", "Reels", "Promo", "VFX", "Wedding", "Podcasts"];
+  const DEFAULT_FAVICON =
+    "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' stop-color='%239333EA'/%3E%3Cstop offset='100%25' stop-color='%2322D3EE'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='8' fill='url(%23g)'/%3E%3Cpolygon points='12,9 24,16 12,23' fill='%2307070A'/%3E%3C/svg%3E";
 
   // Firebase Configuration (Project: aura-ae380)
   const firebaseConfig = {
@@ -30,6 +31,7 @@
   const DEFAULT_CONFIG = {
     brand: {
       name: "Aura Edits VFX",
+      logoUrl: "",
       heroBadge: "AVAILABLE FOR COMMERCIAL & CREATOR PROJECTS",
       heroHeadline: "Crafting *Cinematic* Cuts & Seamless VFX",
       heroTagline:
@@ -61,7 +63,7 @@
       {
         id: "vid-1",
         title: "Cyberpunk Sneaker Launch",
-        category: "VFX",
+        category: "",
         url: "https://www.youtube.com/watch?v=aqz-KE-bpKQ",
         thumb: "",
         description: "3D camera tracking, neon rotoscoping, speed-ramping, and custom sound design for a high-energy footwear drop."
@@ -69,42 +71,10 @@
       {
         id: "vid-2",
         title: "Creator Viral Hook Reel",
-        category: "Reels",
+        category: "",
         url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
         thumb: "",
         description: "Fast-paced 9:16 retention cut with kinetic captions, beat-synced transitions, and punchy SFX."
-      },
-      {
-        id: "vid-3",
-        title: "Luxury Fragrance Commercial",
-        category: "Promo",
-        url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
-        thumb: "",
-        description: "ACES film emulation color grade in DaVinci Resolve paired with clean particle compositing."
-      },
-      {
-        id: "vid-4",
-        title: "Udaipur Royal Wedding Teaser",
-        category: "Wedding",
-        url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoy.mp4",
-        thumb: "",
-        description: "Emotional narrative pacing, warm halation look, and orchestral audio mastering."
-      },
-      {
-        id: "vid-5",
-        title: "Founders Unfiltered Episode 14",
-        category: "Podcasts",
-        url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4",
-        thumb: "",
-        description: "Multi-cam switching, studio dialogue cleanup, animated lower-thirds, and micro-clip cutdowns."
-      },
-      {
-        id: "vid-6",
-        title: "CGI Portal Sequence Breakdown",
-        category: "VFX",
-        url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
-        thumb: "",
-        description: "Match-moved sky replacement, volumetric glow passes, and seamless clean-plate compositing."
       }
     ],
     software: [
@@ -251,6 +221,23 @@
     );
   }
 
+  // ---------- Dynamic Sections Helper ----------
+  function getAvailableCategories() {
+    const seen = new Set();
+    const list = [];
+    config.videos.forEach((v) => {
+      const cat = String(v.category || "").trim();
+      if (cat) {
+        const key = cat.toLowerCase();
+        if (!seen.has(key)) {
+          seen.add(key);
+          list.push(cat);
+        }
+      }
+    });
+    return list;
+  }
+
   // ---------- Helpers ----------
   function escapeHtml(str) {
     return String(str ?? "")
@@ -348,6 +335,36 @@
     toast._timer = setTimeout(() => toast.classList.add("hidden"), 2800);
   }
 
+  // ---------- Compress Uploaded Logo Image ----------
+  function compressLogoFile(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onerror = () => reject(new Error("Read failed"));
+      reader.onload = () => {
+        const img = new Image();
+        img.onerror = () => reject(new Error("Invalid image"));
+        img.onload = () => {
+          const maxDim = 180;
+          let w = img.naturalWidth || 120;
+          let h = img.naturalHeight || 120;
+          if (w > maxDim || h > maxDim) {
+            const scale = Math.min(maxDim / w, maxDim / h);
+            w = Math.max(1, Math.round(w * scale));
+            h = Math.max(1, Math.round(h * scale));
+          }
+          const canvas = document.createElement("canvas");
+          canvas.width = w;
+          canvas.height = h;
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0, w, h);
+          resolve(canvas.toDataURL("image/png"));
+        };
+        img.src = String(reader.result);
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
   // ---------- Software Icons ----------
   function getSoftwareSvg(preset) {
     switch (preset) {
@@ -406,8 +423,40 @@
     root.style.setProperty("--font-heading", fontMap[config.theme.headingFont] || "'Plus Jakarta Sans', 'Inter', sans-serif");
   }
 
+  function renderLogo() {
+    const logoSrc = String(config.brand.logoUrl || "").trim();
+    const navImg = document.getElementById("nav-brand-logo-img");
+    const navMark = document.getElementById("nav-brand-mark");
+    const footerImg = document.getElementById("footer-brand-logo-img");
+    const favicon = document.getElementById("site-favicon");
+
+    if (logoSrc) {
+      navImg.src = logoSrc;
+      navImg.classList.remove("hidden");
+      navMark.classList.add("hidden");
+      navImg.onerror = () => {
+        navImg.classList.add("hidden");
+        navMark.classList.remove("hidden");
+      };
+
+      footerImg.src = logoSrc;
+      footerImg.classList.remove("hidden");
+      footerImg.onerror = () => footerImg.classList.add("hidden");
+
+      if (favicon) favicon.href = logoSrc;
+    } else {
+      navImg.src = "";
+      navImg.classList.add("hidden");
+      navMark.classList.remove("hidden");
+      footerImg.src = "";
+      footerImg.classList.add("hidden");
+      if (favicon) favicon.href = DEFAULT_FAVICON;
+    }
+  }
+
   function renderBrandAndHero() {
     document.title = `${config.brand.name} — Video Editing & VFX Portfolio`;
+    renderLogo();
     document.getElementById("nav-brand-name").textContent = config.brand.name;
     document.getElementById("footer-brand-name").textContent = config.brand.name;
     document.getElementById("hero-badge-text").textContent = config.brand.heroBadge;
@@ -449,16 +498,43 @@
 
   function renderCategoryFilters() {
     const container = document.getElementById("category-filters");
-    container.innerHTML = CATEGORIES.map(
-      (cat) => `
+    const dynamicCats = getAvailableCategories();
+
+    // Update inquiry form datalist too
+    const inqDatalist = document.getElementById("inq-cat-datalist");
+    if (inqDatalist) {
+      inqDatalist.innerHTML = dynamicCats.map((c) => `<option value="${escapeHtml(c)}"></option>`).join("");
+    }
+
+    // Agar abhi tak koi section nahi hai toh filter bar hide rakhein
+    if (dynamicCats.length === 0) {
+      activeCategory = "All";
+      container.innerHTML = "";
+      container.classList.add("hidden");
+      return;
+    }
+
+    if (
+      activeCategory !== "All" &&
+      !dynamicCats.some((c) => c.toLowerCase() === activeCategory.toLowerCase())
+    ) {
+      activeCategory = "All";
+    }
+
+    const allTabs = ["All", ...dynamicCats];
+    container.classList.remove("hidden");
+    container.innerHTML = allTabs
+      .map(
+        (cat) => `
       <button
         type="button"
-        class="filter-pill ${cat === activeCategory ? "active" : ""}"
+        class="filter-pill ${cat.toLowerCase() === activeCategory.toLowerCase() ? "active" : ""}"
         data-category="${escapeHtml(cat)}"
         role="tab"
-        aria-selected="${cat === activeCategory}"
+        aria-selected="${cat.toLowerCase() === activeCategory.toLowerCase()}"
       >${escapeHtml(cat)}</button>`
-    ).join("");
+      )
+      .join("");
 
     container.querySelectorAll(".filter-pill").forEach((btn) => {
       btn.addEventListener("click", () => {
@@ -477,7 +553,9 @@
     const filtered =
       activeCategory === "All"
         ? config.videos
-        : config.videos.filter((v) => v.category.toLowerCase() === activeCategory.toLowerCase());
+        : config.videos.filter(
+            (v) => String(v.category || "").trim().toLowerCase() === activeCategory.toLowerCase()
+          );
 
     if (filtered.length === 0) {
       grid.innerHTML = "";
@@ -490,10 +568,11 @@
       .map((vid) => {
         const parsed = parseVideoSource(vid.url);
         const thumbSrc = vid.thumb || parsed.autoThumb;
+        const catText = String(vid.category || "").trim();
         return `
         <article class="video-card spotlight-card" data-video-id="${escapeHtml(vid.id)}" tabindex="0" role="button" aria-label="Play ${escapeHtml(vid.title)}">
           <div class="video-thumb-wrap">
-            <div class="video-thumb-fallback">${escapeHtml(vid.category)}</div>
+            <div class="video-thumb-fallback">${escapeHtml(catText || "VIDEO")}</div>
             ${
               thumbSrc
                 ? `<img src="${escapeHtml(thumbSrc)}" alt="${escapeHtml(vid.title)}" loading="lazy" onerror="this.remove()" />`
@@ -501,7 +580,7 @@
             }
             <div class="video-inline-player"></div>
             <div class="video-thumb-gradient"></div>
-            <span class="video-cat-badge">${escapeHtml(vid.category)}</span>
+            ${catText ? `<span class="video-cat-badge">${escapeHtml(catText)}</span>` : ""}
             <span class="video-source-badge">${escapeHtml(parsed.badge)}</span>
             <span class="video-playing-tag">● PLAYING</span>
             <div class="video-play-circle" aria-hidden="true">
@@ -626,7 +705,7 @@
               scale: 1,
               y: 0,
               duration: 0.6,
-              delay: (i % 3) * 0.07,
+              delay: (i % 2) * 0.07,
               ease: "power2.out",
               clearProps: "transform",
               scrollTrigger: {
@@ -656,7 +735,7 @@
       { threshold: 0.12 }
     );
     cards.forEach((card, i) => {
-      card.style.transitionDelay = `${(i % 3) * 60}ms`;
+      card.style.transitionDelay = `${(i % 2) * 60}ms`;
       card.classList.add("io-hidden");
       videoObserver.observe(card);
     });
@@ -747,8 +826,8 @@
     requestAnimationFrame(step);
   }
 
-  // ---------- Scroll Auto-Play (Up to 3 Videos Simultaneously) ----------
-  const MAX_CONCURRENT_VIDEOS = 3;
+  // ---------- Scroll Auto-Play (Up to 2-3 Videos Simultaneously) ----------
+  const MAX_CONCURRENT_VIDEOS = 2;
   const activeAutoPlaySet = new Set();
   let scrollAutoPlayTicking = false;
   let autoPlayDelayTimer = null;
@@ -844,11 +923,9 @@
       }
     });
 
-    // Screen ke center ke sabse kareeb wale 3 videos chunein
     visibleItems.sort((a, b) => a.dist - b.dist);
     const targetSet = new Set(visibleItems.slice(0, MAX_CONCURRENT_VIDEOS).map((item) => item.el));
 
-    // Jo videos ab screen se bahar chale gaye hain unhe band karein
     Array.from(activeAutoPlaySet).forEach((el) => {
       if (!targetSet.has(el)) {
         stopInlineVideo(el);
@@ -881,8 +958,17 @@
     const modal = document.getElementById("lightbox-modal");
     const frame = document.getElementById("lightbox-player-frame");
     const parsed = parseVideoSource(video.url);
+    const catEl = document.getElementById("lightbox-category");
+    const catText = String(video.category || "").trim();
 
-    document.getElementById("lightbox-category").textContent = video.category;
+    if (catText) {
+      catEl.textContent = catText;
+      catEl.classList.remove("hidden");
+    } else {
+      catEl.textContent = "";
+      catEl.classList.add("hidden");
+    }
+
     document.getElementById("lightbox-title").textContent = video.title;
     document.getElementById("lightbox-desc").textContent = video.description || "";
 
@@ -944,7 +1030,27 @@
     requestAnimationFrame(updateScrollAutoPlay);
   }
 
+  function updateAdminLogoPreview() {
+    const logoSrc = String(config.brand.logoUrl || "").trim();
+    const wrap = document.getElementById("adm-logo-preview-wrap");
+    const img = document.getElementById("adm-logo-preview-img");
+    const removeBtn = document.getElementById("adm-logo-remove-btn");
+
+    if (logoSrc) {
+      img.src = logoSrc;
+      wrap.classList.remove("hidden");
+      removeBtn.classList.remove("hidden");
+    } else {
+      img.src = "";
+      wrap.classList.add("hidden");
+      removeBtn.classList.add("hidden");
+    }
+  }
+
   function populateAdminFields() {
+    document.getElementById("adm-logo-url").value = config.brand.logoUrl || "";
+    updateAdminLogoPreview();
+
     document.getElementById("adm-brand-name").value = config.brand.name;
     document.getElementById("adm-hero-badge").value = config.brand.heroBadge;
     document.getElementById("adm-hero-headline").value = config.brand.heroHeadline;
@@ -963,6 +1069,7 @@
     document.getElementById("adm-phone").value = config.contact.phone;
     document.getElementById("adm-country-code").value = config.contact.countryCode;
 
+    renderAdminCategorySuggestions();
     renderAdminVideoList();
     renderAdminSoftwareList();
     renderAdminSocialList();
@@ -978,6 +1085,33 @@
     document.getElementById("adm-heading-font").value = config.theme.headingFont;
   }
 
+  function renderAdminCategorySuggestions() {
+    const cats = getAvailableCategories();
+    const datalist = document.getElementById("adm-cat-datalist");
+    const chipsBox = document.getElementById("adm-cat-chips");
+    if (!datalist || !chipsBox) return;
+
+    datalist.innerHTML = cats.map((c) => `<option value="${escapeHtml(c)}"></option>`).join("");
+
+    if (cats.length === 0) {
+      chipsBox.innerHTML = "";
+      return;
+    }
+
+    chipsBox.innerHTML = cats
+      .map(
+        (c) =>
+          `<button type="button" class="preset-chip" data-pick-cat="${escapeHtml(c)}">+ ${escapeHtml(c)}</button>`
+      )
+      .join("");
+
+    chipsBox.querySelectorAll("[data-pick-cat]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        document.getElementById("adm-vid-cat").value = btn.dataset.pickCat;
+      });
+    });
+  }
+
   function renderAdminVideoList() {
     const list = document.getElementById("adm-video-list");
     if (!config.videos.length) {
@@ -986,11 +1120,14 @@
     }
 
     list.innerHTML = config.videos
-      .map(
-        (v, idx) => `
+      .map((v, idx) => {
+        const catLabel = String(v.category || "").trim();
+        return `
       <div class="admin-list-item">
         <div class="admin-item-info">
-          <strong>${escapeHtml(v.title)} <span class="mono-tag">[${escapeHtml(v.category)}]</span></strong>
+          <strong>${escapeHtml(v.title)} ${
+          catLabel ? `<span class="mono-tag">[${escapeHtml(catLabel)}]</span>` : ""
+        }</strong>
           <span>${escapeHtml(v.url)}</span>
         </div>
         <div class="admin-item-actions">
@@ -1001,8 +1138,8 @@
           <button type="button" class="icon-btn-xs" data-v-act="edit" data-idx="${idx}">Edit</button>
           <button type="button" class="icon-btn-xs danger" data-v-act="del" data-idx="${idx}">Delete</button>
         </div>
-      </div>`
-      )
+      </div>`;
+      })
       .join("");
 
     list.querySelectorAll("[data-v-act]").forEach((btn) => {
@@ -1019,7 +1156,7 @@
           const v = config.videos[idx];
           document.getElementById("adm-video-edit-id").value = v.id;
           document.getElementById("adm-vid-title").value = v.title;
-          document.getElementById("adm-vid-cat").value = v.category;
+          document.getElementById("adm-vid-cat").value = v.category || "";
           document.getElementById("adm-vid-url").value = v.url;
           document.getElementById("adm-vid-thumb").value = v.thumb || "";
           document.getElementById("adm-vid-desc").value = v.description || "";
@@ -1029,7 +1166,9 @@
           return;
         }
         saveConfig();
+        renderCategoryFilters();
         renderVideos(false);
+        renderAdminCategorySuggestions();
         renderAdminVideoList();
       });
     });
@@ -1152,6 +1291,40 @@
       });
     });
 
+    // Logo URL & Upload handlers
+    document.getElementById("adm-logo-url").addEventListener("input", (e) => {
+      config.brand.logoUrl = e.target.value.trim();
+      updateAdminLogoPreview();
+      saveConfig();
+      renderLogo();
+    });
+
+    document.getElementById("adm-logo-file").addEventListener("change", async (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      try {
+        const dataUrl = await compressLogoFile(file);
+        config.brand.logoUrl = dataUrl;
+        document.getElementById("adm-logo-url").value = dataUrl;
+        updateAdminLogoPreview();
+        saveConfig();
+        renderLogo();
+        showToast("Logo uploaded & synced live");
+      } catch {
+        showToast("Unable to load logo image");
+      }
+      e.target.value = "";
+    });
+
+    document.getElementById("adm-logo-remove-btn").addEventListener("click", () => {
+      config.brand.logoUrl = "";
+      document.getElementById("adm-logo-url").value = "";
+      updateAdminLogoPreview();
+      saveConfig();
+      renderLogo();
+      showToast("Logo removed");
+    });
+
     const brandBindings = [
       ["adm-brand-name", "name"],
       ["adm-hero-badge", "heroBadge"],
@@ -1196,7 +1369,7 @@
     bindColorPair("adm-secondary-color", "adm-secondary-hex", "secondary");
     bindColorPair("adm-glow-color", "adm-glow-hex", "glow");
 
-    document.querySelectorAll(".preset-chip").forEach((chip) => {
+    document.querySelectorAll(".preset-chip[data-accent]").forEach((chip) => {
       chip.addEventListener("click", () => {
         config.theme.accent = chip.dataset.accent;
         config.theme.secondary = chip.dataset.secondary;
@@ -1228,7 +1401,7 @@
       const item = {
         id: editId || `vid-${Date.now()}`,
         title: document.getElementById("adm-vid-title").value.trim(),
-        category: document.getElementById("adm-vid-cat").value,
+        category: document.getElementById("adm-vid-cat").value.trim(),
         url: document.getElementById("adm-vid-url").value.trim(),
         thumb: document.getElementById("adm-vid-thumb").value.trim(),
         description: document.getElementById("adm-vid-desc").value.trim()
@@ -1245,7 +1418,9 @@
 
       resetVideoForm();
       saveConfig();
+      renderCategoryFilters();
       renderVideos(false);
+      renderAdminCategorySuggestions();
       renderAdminVideoList();
     });
 
@@ -1399,7 +1574,7 @@
     document.getElementById("inquiry-form").addEventListener("submit", (e) => {
       e.preventDefault();
       const name = document.getElementById("inq-name").value.trim();
-      const category = document.getElementById("inq-category").value;
+      const category = document.getElementById("inq-category").value.trim();
       const timeline = document.getElementById("inq-timeline").value.trim();
       const details = document.getElementById("inq-message").value.trim();
 
@@ -1407,7 +1582,7 @@
         `Hi ${config.brand.name}! I'd like to book an edit.`,
         ``,
         `*Name:* ${name}`,
-        `*Category:* ${category}`,
+        category ? `*Edit Type:* ${category}` : null,
         timeline ? `*Timeline / Budget:* ${timeline}` : null,
         `*Project Brief:* ${details}`
       ].filter((l) => l !== null);
@@ -1529,7 +1704,6 @@
         ctx.fillStyle = "#07070A";
         ctx.fillRect(0, 0, width, height);
 
-        // Sirf ek single full-screen layer — koi double image nahi
         drawSingleCoverFrame(frames[drawA], 1);
         if (drawB !== -1 && drawB !== drawA && quantAlpha > 0) {
           drawSingleCoverFrame(frames[drawB], quantAlpha);
