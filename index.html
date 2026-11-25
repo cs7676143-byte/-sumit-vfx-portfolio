@@ -7,7 +7,7 @@
   <meta name="description" content="Aura Edits VFX — High-retention video editing, cinematic color grading, and visual effects portfolio." />
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' stop-color='%239333EA'/%3E%3Cstop offset='100%25' stop-color='%2322D3EE'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='8' fill='url(%23g)'/%3E%3Cpolygon points='12,9 24,16 12,23' fill='%2307070A'/%3E%3C/svg%3E" />
 
-  <!-- Google Fonts (Clean Modern Typography: Inter & Plus Jakarta Sans + JetBrains Mono) -->
+  <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Outfit:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
@@ -17,6 +17,11 @@
   <!-- GSAP & ScrollTrigger -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+
+  <!-- Firebase App & Realtime Database -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js" defer></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js" defer></script>
+
   <script src="app.js" defer></script>
 </head>
 <body>
@@ -167,7 +172,7 @@
         </div>
 
         <div class="videos-grid" id="videos-grid">
-          <!-- Video cards rendered dynamically with scroll-triggered GSAP scale+unblur+slide -->
+          <!-- Video cards rendered dynamically -->
         </div>
 
         <div class="empty-state glass-card hidden" id="videos-empty">
@@ -335,7 +340,7 @@
     <div class="admin-panel glass-card">
       <div class="admin-header">
         <div>
-          <span class="mono-tag">LIVE STUDIO CMS // AUTO-SAVING</span>
+          <span class="mono-tag">LIVE STUDIO CMS // FIREBASE CLOUD SYNC</span>
           <h2 id="admin-dash-title">Aura Edits Admin Control</h2>
         </div>
         <div class="admin-header-actions">
@@ -606,7 +611,7 @@
       </div>
 
       <div class="admin-footer-bar">
-        <span class="mono-tag save-status" id="admin-save-status">● All changes saved to localStorage</span>
+        <span class="mono-tag save-status" id="admin-save-status">● Live on Firebase (All Users)</span>
         <button type="button" class="btn btn-primary btn-sm" id="admin-done-btn">Done &amp; Preview</button>
       </div>
     </div>
