@@ -242,7 +242,6 @@
             }
           }
         } else if (localStorage.getItem(STORAGE_KEY)) {
-          // Agar pehle se local edits hain aur Firebase khali hai toh turant push karein
           saveConfig(false);
         }
       },
@@ -597,7 +596,7 @@
     });
   }
 
-  // ---------- Scroll Animations (GSAP + ScrollTrigger + IO Fallback) ----------
+  // ---------- Scroll Animations (Optimized without heavy blur/scrub) ----------
   function animateVideoCards(isFilterSwitch = false) {
     const cards = Array.from(document.querySelectorAll("#videos-grid .video-card"));
     if (!cards.length) return;
@@ -606,53 +605,37 @@
       if (isFilterSwitch) {
         gsap.fromTo(
           cards,
-          { opacity: 0, scale: 0.9, y: 36, filter: "blur(10px)" },
+          { opacity: 0, scale: 0.94, y: 24 },
           {
             opacity: 1,
             scale: 1,
             y: 0,
-            filter: "blur(0px)",
-            duration: 0.55,
-            stagger: 0.07,
-            ease: "power3.out",
-            clearProps: "filter,transform"
+            duration: 0.45,
+            stagger: 0.05,
+            ease: "power2.out",
+            clearProps: "transform"
           }
         );
       } else {
         cards.forEach((card, i) => {
           gsap.fromTo(
             card,
-            { opacity: 0, scale: 0.9, y: 54, filter: "blur(12px)" },
+            { opacity: 0, scale: 0.94, y: 34 },
             {
               opacity: 1,
               scale: 1,
               y: 0,
-              filter: "blur(0px)",
-              duration: 0.85,
-              delay: (i % 3) * 0.1,
-              ease: "power3.out",
-              clearProps: "filter,transform",
+              duration: 0.6,
+              delay: (i % 3) * 0.07,
+              ease: "power2.out",
+              clearProps: "transform",
               scrollTrigger: {
                 trigger: card,
-                start: "top 90%",
+                start: "top 92%",
                 once: true
               }
             }
           );
-
-          const thumbImg = card.querySelector(".video-thumb-wrap img");
-          if (thumbImg) {
-            gsap.to(thumbImg, {
-              yPercent: -6,
-              ease: "none",
-              scrollTrigger: {
-                trigger: card,
-                start: "top bottom",
-                end: "bottom top",
-                scrub: true
-              }
-            });
-          }
         });
         ScrollTrigger.refresh();
       }
@@ -673,7 +656,7 @@
       { threshold: 0.12 }
     );
     cards.forEach((card, i) => {
-      card.style.transitionDelay = `${(i % 3) * 80}ms`;
+      card.style.transitionDelay = `${(i % 3) * 60}ms`;
       card.classList.add("io-hidden");
       videoObserver.observe(card);
     });
@@ -684,48 +667,47 @@
       gsap.registerPlugin(ScrollTrigger);
 
       gsap.from(".hero-reveal", {
-        y: 32,
+        y: 26,
         opacity: 0,
-        filter: "blur(8px)",
-        duration: 0.85,
-        stagger: 0.1,
-        ease: "power3.out",
-        clearProps: "filter,transform"
+        duration: 0.7,
+        stagger: 0.08,
+        ease: "power2.out",
+        clearProps: "transform"
       });
 
       document.querySelectorAll(".scroll-reveal-block").forEach((block) => {
         gsap.from(block, {
-          y: 40,
+          y: 32,
           opacity: 0,
-          duration: 0.8,
-          ease: "power3.out",
+          duration: 0.65,
+          ease: "power2.out",
           clearProps: "transform",
           scrollTrigger: {
             trigger: block,
-            start: "top 86%",
+            start: "top 88%",
             once: true
           }
         });
       });
 
       gsap.from(".software-card", {
-        y: 38,
-        scale: 0.94,
+        y: 30,
+        scale: 0.95,
         opacity: 0,
-        duration: 0.75,
-        stagger: 0.12,
-        ease: "power3.out",
+        duration: 0.6,
+        stagger: 0.1,
+        ease: "power2.out",
         clearProps: "transform",
         scrollTrigger: {
           trigger: "#software-grid",
-          start: "top 86%",
+          start: "top 88%",
           once: true
         }
       });
 
       ScrollTrigger.create({
         trigger: "#experience",
-        start: "top 82%",
+        start: "top 84%",
         once: true,
         onEnter: runStatCounters
       });
@@ -765,9 +747,10 @@
     requestAnimationFrame(step);
   }
 
-  // ---------- Scroll Auto-Play (One Active Video at a Time) ----------
+  // ---------- Scroll Auto-Play (Debounced, One Active Video at a Time) ----------
   let activeAutoPlayEl = null;
   let scrollAutoPlayTicking = false;
+  let autoPlayDelayTimer = null;
 
   function buildInlinePreviewHtml(rawUrl, title) {
     const url = (rawUrl || "").trim();
@@ -794,6 +777,7 @@
   }
 
   function stopAllInlineVideos() {
+    clearTimeout(autoPlayDelayTimer);
     document.querySelectorAll(".is-playing").forEach((el) => stopInlineVideo(el));
     activeAutoPlayEl = null;
   }
@@ -802,32 +786,37 @@
     if (!el || activeAutoPlayEl === el) return;
     if (activeAutoPlayEl) stopInlineVideo(activeAutoPlayEl);
 
-    let videoUrl = "";
-    let videoTitle = "";
-    let slot = null;
+    clearTimeout(autoPlayDelayTimer);
+    autoPlayDelayTimer = setTimeout(() => {
+      if (activeAutoPlayEl === el) return;
 
-    if (el.id === "showreel-trigger") {
-      videoUrl = config.brand.reelUrl;
-      videoTitle = config.brand.reelTitle;
-      const mediaBox = el.querySelector(".showreel-media");
-      if (mediaBox && !mediaBox.querySelector(".showreel-inline-player")) {
-        const div = document.createElement("div");
-        div.className = "showreel-inline-player";
-        mediaBox.insertBefore(div, mediaBox.querySelector(".showreel-overlay"));
+      let videoUrl = "";
+      let videoTitle = "";
+      let slot = null;
+
+      if (el.id === "showreel-trigger") {
+        videoUrl = config.brand.reelUrl;
+        videoTitle = config.brand.reelTitle;
+        const mediaBox = el.querySelector(".showreel-media");
+        if (mediaBox && !mediaBox.querySelector(".showreel-inline-player")) {
+          const div = document.createElement("div");
+          div.className = "showreel-inline-player";
+          mediaBox.insertBefore(div, mediaBox.querySelector(".showreel-overlay"));
+        }
+        slot = el.querySelector(".showreel-inline-player");
+      } else {
+        const vid = config.videos.find((v) => v.id === el.dataset.videoId);
+        if (!vid) return;
+        videoUrl = vid.url;
+        videoTitle = vid.title;
+        slot = el.querySelector(".video-inline-player");
       }
-      slot = el.querySelector(".showreel-inline-player");
-    } else {
-      const vid = config.videos.find((v) => v.id === el.dataset.videoId);
-      if (!vid) return;
-      videoUrl = vid.url;
-      videoTitle = vid.title;
-      slot = el.querySelector(".video-inline-player");
-    }
 
-    if (!slot || !videoUrl) return;
-    slot.innerHTML = buildInlinePreviewHtml(videoUrl, videoTitle);
-    el.classList.add("is-playing");
-    activeAutoPlayEl = el;
+      if (!slot || !videoUrl) return;
+      slot.innerHTML = buildInlinePreviewHtml(videoUrl, videoTitle);
+      el.classList.add("is-playing");
+      activeAutoPlayEl = el;
+    }, 280);
   }
 
   function updateScrollAutoPlay() {
@@ -865,8 +854,9 @@
 
     if (bestEl) {
       startInlineVideo(bestEl);
-    } else if (activeAutoPlayEl) {
-      stopInlineVideo(activeAutoPlayEl);
+    } else {
+      clearTimeout(autoPlayDelayTimer);
+      if (activeAutoPlayEl) stopInlineVideo(activeAutoPlayEl);
     }
   }
 
@@ -879,7 +869,7 @@
     };
     window.addEventListener("scroll", onScrollOrResize, { passive: true });
     window.addEventListener("resize", onScrollOrResize, { passive: true });
-    setTimeout(updateScrollAutoPlay, 400);
+    setTimeout(updateScrollAutoPlay, 450);
   }
 
   // ---------- Lightbox Player ----------
@@ -1424,7 +1414,7 @@
     });
   }
 
-  // ---------- Background Scroll Photo-Frame Animation ----------
+  // ---------- Background Scroll Photo-Frame Animation (On-Demand 60fps Engine) ----------
   function initBackgroundScrollFrames() {
     const canvas = document.getElementById("bg-scroll-canvas");
     if (!canvas) return;
@@ -1446,23 +1436,32 @@
     let lastDrawnB = -1;
     let lastAlpha = -1;
     let lastTime = performance.now();
+    let rafId = null;
 
     function frameUrl(index) {
       const num = String(START_FRAME + index).padStart(3, "0");
       return `frames/ezgif-frame-${num}.jpg`;
     }
 
+    function scheduleRender() {
+      if (!rafId) {
+        lastTime = performance.now();
+        rafId = requestAnimationFrame(render);
+      }
+    }
+
     function resize() {
-      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      dpr = window.innerWidth < 768 ? 1 : Math.min(window.devicePixelRatio || 1, 1.25);
       width = window.innerWidth;
       height = window.innerHeight;
       canvas.width = Math.round(width * dpr);
       canvas.height = Math.round(height * dpr);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.imageSmoothingEnabled = true;
-      ctx.imageSmoothingQuality = "high";
+      ctx.imageSmoothingQuality = "medium";
       lastDrawnA = -1;
       updateTargetFromScroll();
+      scheduleRender();
     }
 
     function drawFrameLayer(img, alpha, mode) {
@@ -1495,15 +1494,19 @@
       const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
       const progress = maxScroll > 0 ? Math.min(1, Math.max(0, window.scrollY / maxScroll)) : 0;
       targetIndex = progress * (TOTAL_FRAMES - 1);
+      scheduleRender();
     }
 
     function render(now) {
+      rafId = null;
       const dt = Math.min((now - lastTime) / 1000, 0.05);
       lastTime = now;
 
-      const smoothing = 1 - Math.exp(-12 * dt);
+      const smoothing = 1 - Math.exp(-14 * dt);
       const diff = targetIndex - currentIndex;
-      if (Math.abs(diff) < 0.0005) {
+      const isMoving = Math.abs(diff) >= 0.002;
+
+      if (!isMoving) {
         currentIndex = targetIndex;
       } else {
         currentIndex += diff * smoothing;
@@ -1515,8 +1518,8 @@
       const frac = clamped - indexA;
 
       const drawA = findNearestReady(indexA);
-      const drawB = frac > 0.01 && ready[indexB] ? indexB : -1;
-      const quantAlpha = drawB !== -1 ? Math.round(frac * 100) / 100 : 0;
+      const drawB = frac > 0.03 && ready[indexB] ? indexB : -1;
+      const quantAlpha = drawB !== -1 ? Math.round(frac * 50) / 50 : 0;
 
       if (drawA !== -1 && (drawA !== lastDrawnA || drawB !== lastDrawnB || quantAlpha !== lastAlpha)) {
         ctx.globalAlpha = 1;
@@ -1527,7 +1530,6 @@
         drawFrameLayer(frames[drawA], 0.72, "cover");
         drawFrameLayer(frames[drawA], 1, "contain");
         if (drawB !== -1 && drawB !== drawA && quantAlpha > 0) {
-          drawFrameLayer(frames[drawB], 0.72 * quantAlpha, "cover");
           drawFrameLayer(frames[drawB], 1 * quantAlpha, "contain");
         }
         ctx.globalAlpha = 1;
@@ -1537,7 +1539,9 @@
         lastAlpha = quantAlpha;
       }
 
-      requestAnimationFrame(render);
+      if (isMoving) {
+        scheduleRender();
+      }
     }
 
     function loadFrame(index) {
@@ -1547,7 +1551,10 @@
         img.onload = () => {
           frames[index] = img;
           ready[index] = 1;
-          if (index === 0) lastDrawnA = -1;
+          if (index === 0 || Math.abs(index - Math.round(currentIndex)) <= 2) {
+            lastDrawnA = -1;
+            scheduleRender();
+          }
           resolve();
         };
         img.onerror = () => resolve();
@@ -1557,10 +1564,11 @@
 
     async function preloadFrames() {
       await loadFrame(0);
+      await new Promise((r) => setTimeout(r, 250));
       const queue = [];
       for (let i = 1; i < TOTAL_FRAMES; i++) queue.push(i);
 
-      const CONCURRENCY = 6;
+      const CONCURRENCY = 3;
       const workers = Array.from({ length: CONCURRENCY }, async () => {
         while (queue.length > 0) {
           const next = queue.shift();
@@ -1574,7 +1582,7 @@
     window.addEventListener("resize", resize, { passive: true });
     window.addEventListener("scroll", updateTargetFromScroll, { passive: true });
     preloadFrames();
-    requestAnimationFrame(render);
+    scheduleRender();
   }
 
   // ---------- Init ----------
