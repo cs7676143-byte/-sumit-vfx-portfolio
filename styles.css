@@ -815,10 +815,10 @@ section {
   box-shadow: 0 8px 22px color-mix(in srgb, var(--accent) 35%, transparent);
 }
 
-/* Featured Edits Grid — Large Cinematic Cards */
+/* Featured Edits Grid — 2-Column Side-by-Side Layout */
 .videos-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 32px;
 }
 
@@ -1008,14 +1008,14 @@ section {
 }
 
 .video-card-title {
-  font-size: 1.22rem;
+  font-size: 1.24rem;
   font-weight: 700;
   margin-bottom: 8px;
   line-height: 1.25;
 }
 
 .video-card-desc {
-  font-size: 0.92rem;
+  font-size: 0.93rem;
   color: var(--text-secondary);
   display: -webkit-box;
   -webkit-line-clamp: 3;
@@ -1677,7 +1677,7 @@ section {
   .videos-grid,
   .software-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 24px;
+    gap: 22px;
   }
 }
 
@@ -1687,7 +1687,7 @@ section {
   }
 
   .container {
-    padding: 0 16px;
+    padding: 0 12px;
   }
 
   .hero-section {
@@ -1721,26 +1721,64 @@ section {
     display: flex;
   }
 
-  /* Mobile par Full-Width Bade Video Cards */
+  /* Mobile par 2-Column Side-by-Side Video Layout */
   .videos-grid {
-    grid-template-columns: 1fr;
-    gap: 24px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
   }
 
   .video-card {
-    border-radius: 20px;
+    border-radius: 14px;
+  }
+
+  .video-cat-badge {
+    top: 8px;
+    left: 8px;
+    padding: 3px 8px;
+    font-size: 0.58rem;
+  }
+
+  .video-source-badge {
+    top: 8px;
+    right: 8px;
+    padding: 3px 6px;
+    font-size: 0.54rem;
+  }
+
+  .video-playing-tag {
+    bottom: 6px;
+    right: 6px;
+    padding: 2px 7px;
+    font-size: 0.52rem;
+  }
+
+  .video-play-circle {
+    width: 38px;
+    height: 38px;
+  }
+
+  .video-play-circle svg {
+    width: 16px;
+    height: 16px;
   }
 
   .video-card-body {
-    padding: 20px 20px 22px;
+    padding: 12px 12px 14px;
   }
 
   .video-card-title {
-    font-size: 1.25rem;
+    font-size: 0.95rem;
+    margin-bottom: 4px;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
 
   .video-card-desc {
-    font-size: 0.94rem;
+    font-size: 0.78rem;
+    line-height: 1.35;
+    -webkit-line-clamp: 2;
   }
 
   .software-grid,
