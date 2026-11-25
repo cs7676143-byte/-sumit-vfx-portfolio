@@ -376,12 +376,39 @@ h1, h2, h3, h4, .brand-text {
   font-size: 1.22rem;
 }
 
+.brand-logo-img {
+  height: 36px;
+  width: auto;
+  max-width: 140px;
+  border-radius: 9px;
+  object-fit: contain;
+  flex-shrink: 0;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+}
+
+.footer-logo-img {
+  height: 30px;
+  max-width: 110px;
+}
+
+.admin-logo-preview {
+  height: 52px;
+  width: auto;
+  max-width: 180px;
+  border-radius: 10px;
+  object-fit: contain;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  padding: 4px;
+  background: rgba(7, 7, 10, 0.6);
+}
+
 .brand-mark {
   width: 32px;
   height: 32px;
   border-radius: 9px;
   background: linear-gradient(135deg, var(--accent), var(--accent-secondary), var(--accent-cyan));
   position: relative;
+  flex-shrink: 0;
   box-shadow: 0 0 18px color-mix(in srgb, var(--accent) 55%, transparent);
 }
 
@@ -1559,22 +1586,24 @@ section {
 }
 
 .preset-chip {
-  padding: 8px 14px;
+  padding: 7px 13px;
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.14);
   background: rgba(255, 255, 255, 0.05);
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   cursor: pointer;
 }
 
 .preset-chip:hover {
   border-color: var(--accent-cyan);
+  color: #fff;
 }
 
 .form-actions-inline {
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
+  align-items: center;
 }
 
 .admin-list {
