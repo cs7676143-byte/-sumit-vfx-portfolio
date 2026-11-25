@@ -241,6 +241,9 @@
               populateAdminFields();
             }
           }
+        } else if (localStorage.getItem(STORAGE_KEY)) {
+          // Agar pehle se local edits hain aur Firebase khali hai toh turant push karein
+          saveConfig(false);
         }
       },
       (err) => {
@@ -1520,11 +1523,12 @@
         ctx.fillStyle = "#07070A";
         ctx.fillRect(0, 0, width, height);
 
-        drawFrameLayer(frames[drawA], 0.24, "cover");
-        drawFrameLayer(frames[drawA], 0.94, "contain");
+        // Bright full-screen backdrop + sharp centered frame
+        drawFrameLayer(frames[drawA], 0.72, "cover");
+        drawFrameLayer(frames[drawA], 1, "contain");
         if (drawB !== -1 && drawB !== drawA && quantAlpha > 0) {
-          drawFrameLayer(frames[drawB], 0.24 * quantAlpha, "cover");
-          drawFrameLayer(frames[drawB], 0.94 * quantAlpha, "contain");
+          drawFrameLayer(frames[drawB], 0.72 * quantAlpha, "cover");
+          drawFrameLayer(frames[drawB], 1 * quantAlpha, "contain");
         }
         ctx.globalAlpha = 1;
 
