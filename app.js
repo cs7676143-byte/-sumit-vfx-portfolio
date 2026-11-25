@@ -3,6 +3,30 @@
   const ADMIN_PASS = "sumit111";
   const CATEGORIES = ["All", "Reels", "Promo", "VFX", "Wedding", "Podcasts"];
 
+  // Firebase Configuration (Project: aura-ae380)
+  const firebaseConfig = {
+    apiKey: "AIzaSyBW7W6ovqUwsjTFDd5xCyHQ8M-jboIJSVU",
+    authDomain: "aura-ae380.firebaseapp.com",
+    databaseURL: "https://aura-ae380-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "aura-ae380",
+    storageBucket: "aura-ae380.firebasestorage.app",
+    messagingSenderId: "1062935602434",
+    appId: "1:1062935602434:web:2159fb1968c9988e458e1b",
+    measurementId: "G-5B3NV8409H"
+  };
+
+  let dbRef = null;
+  if (window.firebase) {
+    try {
+      if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+      }
+      dbRef = firebase.database().ref("aura_portfolio");
+    } catch (e) {
+      console.error("Firebase Init Error:", e);
+    }
+  }
+
   const DEFAULT_CONFIG = {
     brand: {
       name: "Aura Edits VFX",
@@ -124,8 +148,10 @@
   let activeCategory = "All";
   let isAdminUnlocked = false;
   let videoObserver = null;
+  let firebaseSaveTimer = null;
+  let hasRemoteData = false;
 
-  // ---------- Storage & Config ----------
+  // ---------- Storage & Firebase Sync ----------
   function deepClone(obj) {
     return JSON.parse(JSON.stringify(obj));
   }
@@ -164,13 +190,63 @@
   function saveConfig(showNotice = true) {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
-      const status = document.getElementById("admin-save-status");
-      if (status && showNotice) {
-        status.textContent = "● Saved to localStorage";
-      }
     } catch {
-      showToast("Storage quota exceeded — unable to save locally.");
+      showToast("Local storage full — syncing to Firebase...");
     }
+
+    const status = document.getElementById("admin-save-status");
+    if (!dbRef) {
+      if (status && showNotice) status.textContent = "● Saved locally";
+      return;
+    }
+
+    if (status && showNotice) {
+      status.textContent = "● Saving to Firebase...";
+    }
+
+    clearTimeout(firebaseSaveTimer);
+    firebaseSaveTimer = setTimeout(() => {
+      dbRef
+        .set({ ...config, _pass: ADMIN_PASS })
+        .then(() => {
+          hasRemoteData = true;
+          if (status && showNotice) {
+            status.textContent = "● Live on Firebase (All Users)";
+          }
+        })
+        .catch((err) => {
+          console.error("Firebase Save Error:", err);
+          if (status) status.textContent = "● Firebase Sync Error — Check Rules";
+          showToast("Firebase save failed — verify Realtime Database Rules");
+        });
+    }, 300);
+  }
+
+  function initFirebaseSync() {
+    if (!dbRef) return;
+    dbRef.on(
+      "value",
+      (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+          hasRemoteData = true;
+          const nextConfig = mergeDefaults(deepClone(DEFAULT_CONFIG), data);
+          if (JSON.stringify(nextConfig) !== JSON.stringify(config)) {
+            config = nextConfig;
+            try {
+              localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
+            } catch {}
+            renderAll();
+            if (isAdminUnlocked && !document.activeElement?.closest("#admin-dashboard-modal")) {
+              populateAdminFields();
+            }
+          }
+        }
+      },
+      (err) => {
+        console.error("Firebase Read Error:", err);
+      }
+    );
   }
 
   // ---------- Helpers ----------
@@ -392,6 +468,7 @@
   }
 
   function renderVideos(animateFresh = false) {
+    stopAllInlineVideos();
     const grid = document.getElementById("videos-grid");
     const empty = document.getElementById("videos-empty");
 
@@ -420,9 +497,11 @@
                 ? `<img src="${escapeHtml(thumbSrc)}" alt="${escapeHtml(vid.title)}" loading="lazy" onerror="this.remove()" />`
                 : ""
             }
+            <div class="video-inline-player"></div>
             <div class="video-thumb-gradient"></div>
             <span class="video-cat-badge">${escapeHtml(vid.category)}</span>
             <span class="video-source-badge">${escapeHtml(parsed.badge)}</span>
+            <span class="video-playing-tag">● PLAYING // CLICK FOR SOUND</span>
             <div class="video-play-circle" aria-hidden="true">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.14v14l11-7-11-7z"/></svg>
             </div>
@@ -451,6 +530,7 @@
 
     attachSpotlightListeners();
     animateVideoCards(animateFresh);
+    requestAnimationFrame(updateScrollAutoPlay);
   }
 
   function renderSoftware() {
@@ -557,24 +637,25 @@
             }
           );
 
-          // Subtle parallax depth on scroll
-          gsap.to(card.querySelector(".video-thumb-wrap img"), {
-            yPercent: -6,
-            ease: "none",
-            scrollTrigger: {
-              trigger: card,
-              start: "top bottom",
-              end: "bottom top",
-              scrub: true
-            }
-          });
+          const thumbImg = card.querySelector(".video-thumb-wrap img");
+          if (thumbImg) {
+            gsap.to(thumbImg, {
+              yPercent: -6,
+              ease: "none",
+              scrollTrigger: {
+                trigger: card,
+                start: "top bottom",
+                end: "bottom top",
+                scrub: true
+              }
+            });
+          }
         });
         ScrollTrigger.refresh();
       }
       return;
     }
 
-    // Fallback IntersectionObserver
     if (videoObserver) videoObserver.disconnect();
     videoObserver = new IntersectionObserver(
       (entries) => {
@@ -639,7 +720,6 @@
         }
       });
 
-      // Animated experience counter
       ScrollTrigger.create({
         trigger: "#experience",
         start: "top 82%",
@@ -682,8 +762,126 @@
     requestAnimationFrame(step);
   }
 
+  // ---------- Scroll Auto-Play (One Active Video at a Time) ----------
+  let activeAutoPlayEl = null;
+  let scrollAutoPlayTicking = false;
+
+  function buildInlinePreviewHtml(rawUrl, title) {
+    const url = (rawUrl || "").trim();
+    const ytId = extractYouTubeId(url);
+    if (ytId) {
+      const embedUrl = `https://www.youtube.com/embed/${ytId}?autoplay=1&mute=1&loop=1&playlist=${ytId}&controls=0&modestbranding=1&rel=0&playsinline=1`;
+      return `<iframe src="${escapeHtml(embedUrl)}" allow="autoplay; encrypted-media" tabindex="-1" title="${escapeHtml(title)}"></iframe>`;
+    }
+
+    const driveId = extractDriveId(url);
+    if (driveId) {
+      return `<iframe src="https://drive.google.com/file/d/${driveId}/preview" allow="autoplay" tabindex="-1" title="${escapeHtml(title)}"></iframe>`;
+    }
+
+    return `<video src="${escapeHtml(url)}" muted autoplay loop playsinline></video>`;
+  }
+
+  function stopInlineVideo(el) {
+    if (!el) return;
+    el.classList.remove("is-playing");
+    const slot = el.querySelector(".video-inline-player, .showreel-inline-player");
+    if (slot) slot.innerHTML = "";
+    if (activeAutoPlayEl === el) activeAutoPlayEl = null;
+  }
+
+  function stopAllInlineVideos() {
+    document.querySelectorAll(".is-playing").forEach((el) => stopInlineVideo(el));
+    activeAutoPlayEl = null;
+  }
+
+  function startInlineVideo(el) {
+    if (!el || activeAutoPlayEl === el) return;
+    if (activeAutoPlayEl) stopInlineVideo(activeAutoPlayEl);
+
+    let videoUrl = "";
+    let videoTitle = "";
+    let slot = null;
+
+    if (el.id === "showreel-trigger") {
+      videoUrl = config.brand.reelUrl;
+      videoTitle = config.brand.reelTitle;
+      const mediaBox = el.querySelector(".showreel-media");
+      if (mediaBox && !mediaBox.querySelector(".showreel-inline-player")) {
+        const div = document.createElement("div");
+        div.className = "showreel-inline-player";
+        mediaBox.insertBefore(div, mediaBox.querySelector(".showreel-overlay"));
+      }
+      slot = el.querySelector(".showreel-inline-player");
+    } else {
+      const vid = config.videos.find((v) => v.id === el.dataset.videoId);
+      if (!vid) return;
+      videoUrl = vid.url;
+      videoTitle = vid.title;
+      slot = el.querySelector(".video-inline-player");
+    }
+
+    if (!slot || !videoUrl) return;
+    slot.innerHTML = buildInlinePreviewHtml(videoUrl, videoTitle);
+    el.classList.add("is-playing");
+    activeAutoPlayEl = el;
+  }
+
+  function updateScrollAutoPlay() {
+    scrollAutoPlayTicking = false;
+    const lightbox = document.getElementById("lightbox-modal");
+    const adminModal = document.getElementById("admin-dashboard-modal");
+    if ((lightbox && !lightbox.classList.contains("hidden")) || (adminModal && !adminModal.classList.contains("hidden"))) {
+      return;
+    }
+
+    const candidates = [];
+    const reelEl = document.getElementById("showreel-trigger");
+    if (reelEl) candidates.push(reelEl);
+    document.querySelectorAll("#videos-grid .video-card").forEach((c) => candidates.push(c));
+
+    const vh = window.innerHeight;
+    const viewportCenter = vh * 0.5;
+    let bestEl = null;
+    let bestDistance = Infinity;
+
+    candidates.forEach((el) => {
+      const rect = el.getBoundingClientRect();
+      const visibleHeight = Math.min(rect.bottom, vh) - Math.max(rect.top, 0);
+      const ratio = rect.height > 0 ? visibleHeight / rect.height : 0;
+
+      if (ratio >= 0.5) {
+        const cardCenter = rect.top + rect.height * 0.5;
+        const dist = Math.abs(cardCenter - viewportCenter);
+        if (dist < bestDistance) {
+          bestDistance = dist;
+          bestEl = el;
+        }
+      }
+    });
+
+    if (bestEl) {
+      startInlineVideo(bestEl);
+    } else if (activeAutoPlayEl) {
+      stopInlineVideo(activeAutoPlayEl);
+    }
+  }
+
+  function initScrollAutoPlay() {
+    const onScrollOrResize = () => {
+      if (!scrollAutoPlayTicking) {
+        scrollAutoPlayTicking = true;
+        requestAnimationFrame(updateScrollAutoPlay);
+      }
+    };
+    window.addEventListener("scroll", onScrollOrResize, { passive: true });
+    window.addEventListener("resize", onScrollOrResize, { passive: true });
+    setTimeout(updateScrollAutoPlay, 400);
+  }
+
   // ---------- Lightbox Player ----------
   function openLightbox(video) {
+    stopAllInlineVideos();
     const modal = document.getElementById("lightbox-modal");
     const frame = document.getElementById("lightbox-player-frame");
     const parsed = parseVideoSource(video.url);
@@ -712,6 +910,7 @@
     document.getElementById("lightbox-player-frame").innerHTML = "";
     modal.classList.add("hidden");
     document.body.style.overflow = "";
+    requestAnimationFrame(updateScrollAutoPlay);
   }
 
   // ---------- Admin Panel & Auth ----------
@@ -734,18 +933,22 @@
   }
 
   function openAdminDashboard() {
+    stopAllInlineVideos();
     populateAdminFields();
     document.getElementById("admin-dashboard-modal").classList.remove("hidden");
     document.body.style.overflow = "hidden";
+    if (dbRef && !hasRemoteData) {
+      saveConfig(true);
+    }
   }
 
   function closeAdminDashboard() {
     document.getElementById("admin-dashboard-modal").classList.add("hidden");
     document.body.style.overflow = "";
+    requestAnimationFrame(updateScrollAutoPlay);
   }
 
   function populateAdminFields() {
-    // Brand & Text
     document.getElementById("adm-brand-name").value = config.brand.name;
     document.getElementById("adm-hero-badge").value = config.brand.heroBadge;
     document.getElementById("adm-hero-headline").value = config.brand.heroHeadline;
@@ -759,10 +962,8 @@
     document.getElementById("adm-reel-url").value = config.brand.reelUrl;
     document.getElementById("adm-reel-thumb").value = config.brand.reelThumb || "";
 
-    // Theme
     syncThemeInputs();
 
-    // Contact
     document.getElementById("adm-phone").value = config.contact.phone;
     document.getElementById("adm-country-code").value = config.contact.countryCode;
 
@@ -909,7 +1110,6 @@
   }
 
   function bindAdminEvents() {
-    // Open via footer lock or Ctrl+Shift+A
     document.getElementById("admin-lock-btn").addEventListener("click", openAdminFlow);
     document.addEventListener("keydown", (e) => {
       if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "a") {
@@ -921,7 +1121,6 @@
       }
     });
 
-    // Login
     document.getElementById("login-close-btn").addEventListener("click", closeLoginModal);
     document.getElementById("admin-login-modal").addEventListener("click", (e) => {
       if (e.target.id === "admin-login-modal") closeLoginModal();
@@ -945,7 +1144,6 @@
       }
     });
 
-    // Dashboard Close & Tabs
     document.getElementById("admin-close-btn").addEventListener("click", closeAdminDashboard);
     document.getElementById("admin-done-btn").addEventListener("click", closeAdminDashboard);
 
@@ -958,7 +1156,6 @@
       });
     });
 
-    // Live Brand & Text bindings
     const brandBindings = [
       ["adm-brand-name", "name"],
       ["adm-hero-badge", "heroBadge"],
@@ -981,7 +1178,6 @@
       });
     });
 
-    // Theme Color & Font bindings
     function bindColorPair(pickerId, hexId, key) {
       const picker = document.getElementById(pickerId);
       const hex = document.getElementById(hexId);
@@ -1021,7 +1217,6 @@
       applyTheme();
     });
 
-    // Video Manager Form
     function resetVideoForm() {
       document.getElementById("adm-video-form").reset();
       document.getElementById("adm-video-edit-id").value = "";
@@ -1049,7 +1244,7 @@
         showToast("Video updated");
       } else {
         config.videos.unshift(item);
-        showToast("Video added to Featured Edits");
+        showToast("Video added & synced live");
       }
 
       resetVideoForm();
@@ -1058,7 +1253,6 @@
       renderAdminVideoList();
     });
 
-    // Software Manager Form
     function resetSoftwareForm() {
       document.getElementById("adm-software-form").reset();
       document.getElementById("adm-sw-edit-id").value = "";
@@ -1095,7 +1289,6 @@
       renderAdminSoftwareList();
     });
 
-    // Contact Settings
     document.getElementById("adm-phone").addEventListener("input", (e) => {
       config.contact.phone = e.target.value;
       saveConfig();
@@ -1120,7 +1313,6 @@
       renderAdminSocialList();
     });
 
-    // Export / Import / Reset
     document.getElementById("export-config-btn").addEventListener("click", () => {
       const blob = new Blob([JSON.stringify(config, null, 2)], { type: "application/json" });
       const url = URL.createObjectURL(blob);
@@ -1143,7 +1335,7 @@
           saveConfig();
           renderAll();
           populateAdminFields();
-          showToast("Config imported successfully");
+          showToast("Config imported & synced to Firebase");
         } catch {
           showToast("Invalid JSON config file");
         }
@@ -1164,7 +1356,6 @@
 
   // ---------- General UI Events ----------
   function bindUiEvents() {
-    // Sticky header
     const header = document.querySelector(".site-header");
     window.addEventListener(
       "scroll",
@@ -1174,7 +1365,6 @@
       { passive: true }
     );
 
-    // Mobile Menu
     const menuBtn = document.getElementById("mobile-menu-btn");
     const navLinks = document.getElementById("nav-links");
     menuBtn.addEventListener("click", () => {
@@ -1188,7 +1378,6 @@
       });
     });
 
-    // Showreel Trigger
     const reelTrigger = document.getElementById("showreel-trigger");
     const openReel = () =>
       openLightbox({
@@ -1205,14 +1394,12 @@
       }
     });
 
-    // Lightbox close
     document.getElementById("lightbox-close").addEventListener("click", closeLightbox);
     document.getElementById("lightbox-book-btn").addEventListener("click", closeLightbox);
     document.getElementById("lightbox-modal").addEventListener("click", (e) => {
       if (e.target.id === "lightbox-modal") closeLightbox();
     });
 
-    // WhatsApp Quick Project Inquiry Form
     document.getElementById("inquiry-form").addEventListener("submit", (e) => {
       e.preventDefault();
       const name = document.getElementById("inq-name").value.trim();
@@ -1333,7 +1520,6 @@
         ctx.fillStyle = "#07070A";
         ctx.fillRect(0, 0, width, height);
 
-        // Ambient full-bleed backdrop + sharp centered frame
         drawFrameLayer(frames[drawA], 0.24, "cover");
         drawFrameLayer(frames[drawA], 0.94, "contain");
         if (drawB !== -1 && drawB !== drawA && quantAlpha > 0) {
@@ -1390,9 +1576,11 @@
   // ---------- Init ----------
   document.addEventListener("DOMContentLoaded", () => {
     renderAll();
+    initFirebaseSync();
     bindUiEvents();
     bindAdminEvents();
     initPageAnimations();
     initBackgroundScrollFrames();
+    initScrollAutoPlay();
   });
 })();
